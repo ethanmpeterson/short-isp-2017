@@ -11,7 +11,20 @@
 #define portB 0x13
 #endif
 
+void mcPinMode(uint8_t pin, bool state) {
+}
+
+void mcWrite(uint8_t pin, bool state) {
+}
+
+void initIO() {
+    Wire.begin();
+    pinMode(A4, OUTPUT);
+    pinMode(A5,  OUTPUT);
+}
+
 void setup() {
+    initIO();
 }
 
 
