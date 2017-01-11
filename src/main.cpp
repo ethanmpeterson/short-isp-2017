@@ -25,26 +25,43 @@
 
 
 // make variables to hold the values in each of the MCP23017's registers
-uint8_t portAValue = 255;
-uint8_t portBValue = 255;
+// pin direction registers
+uint8_t portADirValue = 255;
+uint8_t portBDirValue = 255;
+// pin value registers
+uint8_t portAValue = 0;
+uint8_t portBValue = 0;
+
+
 
 void mcPinMode(uint8_t pin, bool state) {
     Wire.beginTransmission(expanderAddress);
     if (pin < 8) {
         Wire.write(portADir); // map pins 0-7 to register A
-        portAValue ^= (~(-state) ^ portAValue) & (1 << pin); // change bit at pin location to whatever the state boolean is
+        portADirValue ^= (~(-state) ^ portADirValue) & (1 << pin); // change bit at pin location to whatever the state boolean is
         // state boolean is inverted because OUTPUT and INPUT values are inverted on MCP23017 (OUTPUT = 0, INPUT = 0)
-        Wire.write(portAValue);
-    } else {
+        Wire.write(portADirValue);
+    } else { // if is greater or equal to 8
         Wire.write(portBDir);
-        portBValue ^= (~(-state) ^ portBValue) & (1 << (pin - 8));
-        Wire.write(portBValue);
+        portBDirValue ^= (~(-state) ^ portBDirValue) & (1 << (pin - 8));
+        Wire.write(portBDirValue);
     }
     Wire.endTransmission();
 }
 
 
 void mcWrite(uint8_t pin, bool state) {
+    Wire.beginTransmission(expanderAddress);
+    if (pin < 8) {
+        Wire.write(portA);
+        portAValue ^= (-state ^ portAValue) & (1 << pin);
+        Wire.write(portAValue);
+    } else {
+        Wire.write(portB);
+        portBValue ^= (-state ^ portBValue) & (1 << (pin - 8));
+        Wire.write(portBValue);
+    }
+    Wire.endTransmission();
 }
 
 
@@ -91,25 +108,29 @@ void initIO() {
     mcPinMode(9, OUTPUT);
     for (uint8_t i = 0; i < 10; i++) { // Set pins 0-9 to OUTPUT for led bargraph
         mcPinMode(i, OUTPUT);
+        mcWrite(i, LOW);
     }
 }
 
 void setup() {
     initIO();
     // Wire.beginTransmission(0x20);
-    // Wire.write(0x01); // IODIRB register
-    // Wire.write(0x00); // set all of port B to outputs
+    // Wire.write(0x13); // GPIOB
+    // Wire.write(255); // port B LSB First
     // Wire.endTransmission();
-    Wire.beginTransmission(0x20);
-    Wire.write(0x13); // GPIOB
-    Wire.write(255); // port B LSB First
-    Wire.endTransmission();
-    Wire.beginTransmission(expanderAddress);
-    Wire.write(portA);
-    Wire.write(255);
-    Wire.endTransmission();
+    // Wire.beginTransmission(expanderAddress);
+    // Wire.write(portA);
+    // Wire.write(255);
+    // Wire.endTransmission();
 }
 
-
 void loop() {
+    for (int i = 0; i < 10; i++) {
+        mcWrite(i, HIGH);
+        delay(100);
+    }
+    for (int j = 9; j >= 0; j--) {
+        mcWrite(j, LOW);
+        delay(100);
+    }
 }
