@@ -16,7 +16,11 @@
 #define portB 0x13
 
 // RTC address
-#define timeAddress 0x68 // I2C address to access time registers on the chronodot
+#define timeAddress 0x68 // I2C address to access time registers on the Chronodot
+// BCD to decimal converter for values read from the RTC
+#define bcdToDec(bcdVal) ((bcdVal / 16 * 10) + (bcdVal % 16)) // preprocessor definition of a function
+// everytime the compiler encounters bcdToDec(input) it will expand to:
+// ((bcdVal / 16 * 10) + (bcdVal % 16))
 #endif
 
 void mcPinMode(uint8_t pin, bool state) {
@@ -27,18 +31,24 @@ void mcWrite(uint8_t pin, bool state) {
 
 // RTC time collection functions
 
-uint8_t hour() {
-    return 0;
+uint8_t hour() { // returns hour (0 - 24)
+    Wire.beginTransmission(timeAddress);
+    Wire.write(0x02); // start reading data from hours register on the Chronodot
+    Wire.endTransmission();
+    // request hour data
+    Wire.requestFrom(timeAddress, 2); // request one byte from the RTC since we start reading data from the hours register we will get hours
+    Wire.read();
+    uint8_t hours = bcdToDec(Wire.read() & 0x3f); // mask required due to control bits on hour register
+    return hours;
 }
 
 uint8_t minute() { // returns minute (0 - 59)
     Wire.beginTransmission(timeAddress);
-    Wire.write(0x01); // start at minutes register on chronodot
+    Wire.write(0x01); // start at minutes register on Chronodot
     Wire.endTransmission();
-    // request data
+    // request minute data
     Wire.requestFrom(timeAddress, 1); // request one byte which is the minute value
-    uint8_t minutes = Wire.read();
-    minutes = uint8_t(minutes); // convert BCD value from Wire.read() call to decimal
+    uint8_t minutes = bcdToDec(Wire.read()); // no mask required on minute register simply convert to decimal
     return minutes;
 }
 
@@ -63,6 +73,6 @@ void setup() {
 
 
 void loop() {
-    Serial.println(minute()); // value is off by 30
+    Serial.println(hour());
     delay(1000);
 }
