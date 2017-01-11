@@ -1,5 +1,10 @@
 #include "Arduino.h"
-#include <Wire.h>
+#include <Wire.h> // For I2C communication between various components
+
+// 7 Segment Backpack libraries:
+#include <Adafruit_GFX.h>
+#include "Adafruit_LEDBackpack.h"
+
 
 #ifndef SYMBOL
 #define address 0x20 // i2c address of MCP23017
@@ -25,6 +30,14 @@ void initIO() {
 
 void setup() {
     initIO();
+    Wire.beginTransmission(0x20);
+    Wire.write(0x01); // IODIRB register
+    Wire.write(0x00); // set all of port B to outputs
+    Wire.endTransmission();
+    Wire.beginTransmission(0x20);
+    Wire.write(0x13); // GPIOB
+    Wire.write(255); // port B LSB First
+    Wire.endTransmission();
 }
 
 
