@@ -89,7 +89,7 @@ void initIO() {
     Wire.write(255);
     Wire.endTransmission();
     mcPinMode(9, OUTPUT);
-    for (uint8_t i = 0; i < 8; i++) {
+    for (uint8_t i = 0; i < 10; i++) { // Set pins 0-9 to OUTPUT for led bargraph
         mcPinMode(i, OUTPUT);
     }
 }
@@ -112,6 +112,4 @@ void setup() {
 
 
 void loop() {
-    Serial.println(hour());
-    delay(1000);
 }
