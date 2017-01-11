@@ -23,11 +23,30 @@
 // ((bcdVal / 16 * 10) + (bcdVal % 16))
 #endif
 
+
+// make variables to hold the values in each of the MCP23017's registers
+uint8_t portAValue = 255;
+uint8_t portBValue = 255;
+
 void mcPinMode(uint8_t pin, bool state) {
+    Wire.beginTransmission(expanderAddress);
+    if (pin < 8) {
+        Wire.write(portADir); // map pins 0-7 to register A
+        portAValue ^= (~(-state) ^ portAValue) & (1 << pin); // change bit at pin location to whatever the state boolean is
+        // state boolean is inverted because OUTPUT and INPUT values are inverted on MCP23017 (OUTPUT = 0, INPUT = 0)
+        Wire.write(portAValue);
+    } else {
+        Wire.write(portBDir);
+        portBValue ^= (~(-state) ^ portBValue) & (1 << (pin - 8));
+        Wire.write(portBValue);
+    }
+    Wire.endTransmission();
 }
+
 
 void mcWrite(uint8_t pin, bool state) {
 }
+
 
 // RTC time collection functions
 
@@ -42,6 +61,7 @@ uint8_t hour() { // returns hour (0 - 24)
     return hours;
 }
 
+
 uint8_t minute() { // returns minute (0 - 59)
     Wire.beginTransmission(timeAddress);
     Wire.write(0x01); // start at minutes register on Chronodot
@@ -52,22 +72,41 @@ uint8_t minute() { // returns minute (0 - 59)
     return minutes;
 }
 
+
 void initIO() {
     Wire.begin();
     pinMode(A4, OUTPUT);
     pinMode(A5,  OUTPUT);
     Serial.begin(9600);
+    // Set all pins on MCP23017 to input by default
+    Wire.beginTransmission(expanderAddress);
+    Wire.write(portADir);
+    Wire.write(255);
+    Wire.endTransmission();
+    // PORT B
+    Wire.beginTransmission(expanderAddress);
+    Wire.write(portBDir);
+    Wire.write(255);
+    Wire.endTransmission();
+    mcPinMode(9, OUTPUT);
+    for (uint8_t i = 0; i < 8; i++) {
+        mcPinMode(i, OUTPUT);
+    }
 }
 
 void setup() {
     initIO();
-    Wire.beginTransmission(0x20);
-    Wire.write(0x01); // IODIRB register
-    Wire.write(0x00); // set all of port B to outputs
-    Wire.endTransmission();
+    // Wire.beginTransmission(0x20);
+    // Wire.write(0x01); // IODIRB register
+    // Wire.write(0x00); // set all of port B to outputs
+    // Wire.endTransmission();
     Wire.beginTransmission(0x20);
     Wire.write(0x13); // GPIOB
     Wire.write(255); // port B LSB First
+    Wire.endTransmission();
+    Wire.beginTransmission(expanderAddress);
+    Wire.write(portA);
+    Wire.write(255);
     Wire.endTransmission();
 }
 
