@@ -22,10 +22,21 @@ void mcPinMode(uint8_t pin, bool state) {
 void mcWrite(uint8_t pin, bool state) {
 }
 
+// RTC functions
+
+uint8_t hour() {
+    return 0;
+}
+
+uint8_t minute() {
+    return 0;
+}
+
 void initIO() {
     Wire.begin();
     pinMode(A4, OUTPUT);
     pinMode(A5,  OUTPUT);
+    Serial.begin(9600);
 }
 
 void setup() {
