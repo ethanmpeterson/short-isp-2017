@@ -107,6 +107,10 @@ uint8_t minute() { // returns minute (0 - 59)
 
 void showTime() {
     // setup variable to print to 7-Segment displays
+    int theTime = hour() * 100 + minute();
+    clockDisplay.print(theTime);
+    clockDisplay.drawColon(true); // show colon on the display between hour and min values
+    clockDisplay.writeDisplay(); // show changes on the display
 }
 
 void animateBargraph() { // bargraph animation for testing purposes
@@ -154,10 +158,13 @@ void initIO() {
 
 void setup() {
     initIO();
+    //showTime();
 }
 
 
 
 void loop() {
     animateBargraph();
+    showTime();
+    //delay(500);
 }
