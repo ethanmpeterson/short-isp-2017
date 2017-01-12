@@ -24,8 +24,12 @@
 #define bcdToDec(bcdVal) (((bcdVal & 0b11110000) >> 4) * 10 + (bcdVal & 0b00001111)) // preprocessor definition of a function
 // everytime the compiler encounters bcdToDec(input) it will expand to:
 // ((bcdVal / 16 * 10) + (bcdVal % 16))
-
 #define interval 1000 // interval of time between reads of the rtc
+
+// define button pin
+#define button 13
+// define function to check if nth bit is set or cleared in byte
+#define bitCheck(inputVar, position) ((inputVar) & (1 << position))
 #endif
 
 Adafruit_7segment clockDisplay = Adafruit_7segment(); // instanciate library class for the 7-Segment Backpack
@@ -74,9 +78,21 @@ void mcWrite(uint8_t pin, bool state) {
     Wire.endTransmission();
 }
 
-void mcRead() { // function serving the same purpose as digitalRead() that works for the MCP23017
-    //Wire.beginTransmission(expanderAddress);
-
+bool mcRead(uint8_t pin) { // function serving the same purpose as digitalRead() that works for the MCP23017
+    Wire.beginTransmission(expanderAddress);
+    uint8_t bitToAccess = pin;
+    uint8_t dataRead; // stores input byte obtained from MCP23017
+    if (pin < 8) {
+        Wire.write(portA);
+    } else {
+        Wire.write(portB);
+        bitToAccess = pin - 8;
+    }
+    Wire.endTransmission();
+    // request the data
+    Wire.requestFrom(expanderAddress, 1);
+    dataRead = Wire.read();
+    return bitCheck(dataRead, bitToAccess);
 }
 
 // RTC time collection functions
