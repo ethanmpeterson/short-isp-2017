@@ -1,10 +1,13 @@
 #include "Arduino.h"
 #include <Wire.h> // For I2C communication between various components
+#include <SoftwareSerial.h> // For Serial communication with the fingerprint sensor
 
 // 7 Segment Backpack libraries:
 #include <Adafruit_GFX.h>
 #include "Adafruit_LEDBackpack.h"
 
+// Fingerprint Scanner Library:
+#include <Adafruit_Fingerprint.h>
 
 #ifndef SYMBOL
 #define expanderAddress 0x20 // i2c address of MCP23017
@@ -34,6 +37,10 @@
 
 Adafruit_7segment clockDisplay = Adafruit_7segment(); // instanciate library class for the 7-Segment Backpack
 
+// intanciate fingerprint and software serial libraries:
+SoftwareSerial mySerial(2, 3);
+Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
+
 // make variables to hold the values in each of the MCP23017's registers
 // pin direction registers
 uint8_t portADirValue = 255;
@@ -43,8 +50,10 @@ uint8_t portAValue = 0;
 uint8_t portBValue = 0;
 
 // make variables to store minute and hour that will be updated every second
-uint8_t minutes;
-uint8_t hours;
+// uint8_t minutes;
+// uint8_t hours;
+
+bool fingerAvailable; // boolean storing true or false depending on whether the sensor is available or not
 
 //MCP23017 functions
 
@@ -92,7 +101,7 @@ bool mcRead(uint8_t pin) { // function serving the same purpose as digitalRead()
     // request the data
     Wire.requestFrom(expanderAddress, 1);
     dataRead = Wire.read();
-    return bitCheck(dataRead, bitToAccess);
+    return bitCheck(dataRead, bitToAccess); // returns true if the bit is set and false if not
 }
 
 // RTC time collection functions
@@ -178,18 +187,14 @@ void initIO() {
     }
     //initialize the 7-Segment Display
     clockDisplay.begin(displayAddress);
+    fingerAvailable = (finger.verifyPassword()) ? false : true; // true when the fingerprint sensor is recgonized
 }
 
 void setup() {
     initIO();
-    //showTime();
 }
 
 
-
 void loop() {
-    animateBargraph();
     showTime();
-    Serial.println(mcRead(13));
-    //delay(500);
 }
