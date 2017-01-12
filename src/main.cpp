@@ -103,13 +103,10 @@ uint8_t minute() { // returns minute (0 - 59)
     return bcdToDec(minutes); // no mask required on minute register simply convert to decimal
 }
 
-// 7-Segment display functions
+// 7-Segment display functions (and other code to do with visual output)
 
 void showTime() {
     // setup variable to print to 7-Segment displays
-    int displayVal = hour() * 100 + minute();
-    Serial.println(String(displayVal));
-    delay(1000);
 }
 
 void animateBargraph() { // bargraph animation for testing purposes
@@ -117,11 +114,19 @@ void animateBargraph() { // bargraph animation for testing purposes
         mcWrite(i, HIGH);
         delay(100);
     }
-    for (int j = 9; j >= 0; j--) {
+    for (int j = 9; j >= 1; j--) {
         mcWrite(j, LOW);
         delay(100);
     }
 }
+
+typedef struct { // will be used to store pin numbers for the RGB LED pin of each color (right out of in class lesson)
+  uint8_t red;
+  uint8_t green;
+  uint8_t blue;
+} RGBLed;
+// assign pin values
+RGBLed rgb = {10, 11, 12};
 
 void initIO() {
     Wire.begin();
@@ -154,7 +159,5 @@ void setup() {
 
 
 void loop() {
-    String theTime = String(hour()) + ":" + String(minute());
-    Serial.println(theTime);
-    delay(1000);
+    animateBargraph();
 }
