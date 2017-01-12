@@ -107,7 +107,15 @@ uint8_t minute() { // returns minute (0 - 59)
 
 void showTime() {
     // setup variable to print to 7-Segment displays
-    int theTime = hour() * 100 + minute();
+    uint8_t h = hour();
+    uint8_t m = minute();
+    int theTime = h * 100 + m;
+    // do 24 to 12 hour time conversion
+    if (h > 12) {
+        theTime -= 1200;
+    } else if (h == 0) { // handle midnight where h = 0
+        theTime += 1200;
+    }
     clockDisplay.print(theTime);
     clockDisplay.drawColon(true); // show colon on the display between hour and min values
     clockDisplay.writeDisplay(); // show changes on the display
