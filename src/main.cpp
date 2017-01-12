@@ -190,5 +190,6 @@ void setup() {
 void loop() {
     animateBargraph();
     showTime();
+    Serial.println(mcRead(13));
     //delay(500);
 }
