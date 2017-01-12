@@ -33,6 +33,7 @@
 #define button 13
 // define function to check if nth bit is set or cleared in byte
 #define bitCheck(inputVar, position) ((inputVar) & (1 << position))
+#define fingerId 0 // id # of my fingerprint stored in the senor
 #endif
 
 Adafruit_7segment clockDisplay = Adafruit_7segment(); // instanciate library class for the 7-Segment Backpack
@@ -52,8 +53,6 @@ uint8_t portBValue = 0;
 // make variables to store minute and hour that will be updated every second
 // uint8_t minutes;
 // uint8_t hours;
-
-bool fingerAvailable; // boolean storing true or false depending on whether the sensor is available or not
 
 //MCP23017 functions
 
@@ -165,6 +164,25 @@ typedef struct { // will be used to store pin numbers for the RGB LED pin of eac
 // assign pin values
 RGBLed rgb = {10, 11, 12};
 
+// Fingerprint sensor code
+uint8_t getID() {
+    uint8_t f = finger.getImage();
+    if (f != FINGERPRINT_OK) {
+        return -1;
+    }
+
+    f = finger.image2Tz();
+    if (f != FINGERPRINT_OK) {
+        return -1;
+    }
+
+    f = finger.fingerFastSearch();
+    if (f != FINGERPRINT_OK) {
+        return -1;
+    }
+    return finger.fingerID;
+}
+
 void initIO() {
     Wire.begin();
     pinMode(A4, OUTPUT);
@@ -187,7 +205,7 @@ void initIO() {
     }
     //initialize the 7-Segment Display
     clockDisplay.begin(displayAddress);
-    fingerAvailable = (finger.verifyPassword()) ? false : true; // true when the fingerprint sensor is recgonized
+    finger.begin(57600);
 }
 
 void setup() {
@@ -197,4 +215,13 @@ void setup() {
 
 void loop() {
     showTime();
+    if (getID() == fingerId && finger.verifyPassword()) {
+        mcWrite(rgb.green, HIGH);
+        mcWrite(rgb.red, LOW);
+        Serial.println("FOUND ID: ");
+        Serial.print(fingerId);
+    } else {
+        mcWrite(rgb.green, LOW);
+        mcWrite(rgb.red, HIGH);
+    }
 }
