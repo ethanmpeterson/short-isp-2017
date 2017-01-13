@@ -183,6 +183,10 @@ uint8_t getID() {
     return finger.fingerID;
 }
 
+void scan() { // runs in a loop scanning for a correct fingerprint on the sensor
+    
+}
+
 void initIO() {
     Wire.begin();
     pinMode(A4, OUTPUT);
@@ -198,7 +202,6 @@ void initIO() {
     Wire.write(portBDir);
     Wire.write(255);
     Wire.endTransmission();
-    mcPinMode(9, OUTPUT);
     for (uint8_t i = 0; i < 10; i++) { // Set pins 0-9 to OUTPUT for led bargraph
         mcPinMode(i, OUTPUT);
         mcWrite(i, LOW);
@@ -206,6 +209,10 @@ void initIO() {
     //initialize the 7-Segment Display
     clockDisplay.begin(displayAddress);
     finger.begin(57600);
+    // Set RGB LED pins to OUTPUT
+    mcPinMode(rgb.red, OUTPUT);
+    mcPinMode(rgb.green, OUTPUT);
+    mcPinMode(rgb.blue, OUTPUT);
 }
 
 void setup() {
