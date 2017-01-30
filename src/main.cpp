@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include <Wire.h> // For I2C communication between various components
 #include <SoftwareSerial.h> // For Serial communication with the fingerprint sensor
+#include <Servo.h> // For easy control of a servo for locking and unlocking the door
 
 // 7 Segment Backpack libraries:
 #include <Adafruit_GFX.h>
@@ -34,13 +35,22 @@
 // define function to check if nth bit is set or cleared in byte
 #define bitCheck(inputVar, position) ((inputVar) & (1 << position))
 #define fingerId 0 // id # of my fingerprint stored in the senor
+#define servoPin 9 // PWM pin on arduino used to control the Servo Motor
+#define lockedPos 85 // servo position for locked door
+#define openPos 180 // servo positon for unlocked door
 #endif
-
+// servo.write(180);
+// delay(1000);
+// servo.write(85);
+// delay(1000);
 Adafruit_7segment clockDisplay = Adafruit_7segment(); // instanciate library class for the 7-Segment Backpack
 
 // intanciate fingerprint and software serial libraries:
 SoftwareSerial mySerial(2, 3);
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
+
+// create instance of Servo Library class
+Servo servo;
 
 // make variables to hold the values in each of the MCP23017's registers
 // pin direction registers
@@ -50,9 +60,7 @@ uint8_t portBDirValue = 255;
 uint8_t portAValue = 0;
 uint8_t portBValue = 0;
 
-// make variables to store minute and hour that will be updated every second
-// uint8_t minutes;
-// uint8_t hours;
+bool buttonState;
 
 //MCP23017 functions
 
@@ -145,6 +153,7 @@ void showTime() {
     clockDisplay.writeDisplay(); // show changes on the display
 }
 
+
 void animateBargraph() { // bargraph animation for testing purposes
     for (int i = 0; i < 10; i++) {
         mcWrite(i, HIGH);
@@ -156,6 +165,7 @@ void animateBargraph() { // bargraph animation for testing purposes
     }
 }
 
+
 typedef struct { // will be used to store pin numbers for the RGB LED pin of each color (right out of in class lesson)
   uint8_t red;
   uint8_t green;
@@ -163,6 +173,7 @@ typedef struct { // will be used to store pin numbers for the RGB LED pin of eac
 } RGBLed;
 // assign pin values
 RGBLed rgb = {10, 11, 12};
+
 
 // Fingerprint sensor code
 uint8_t getID() {
@@ -183,9 +194,20 @@ uint8_t getID() {
     return finger.fingerID;
 }
 
+
 void scan() { // runs in a loop scanning for a correct fingerprint on the sensor
-    
+    bool fingerAvailable = finger.verifyPassword();
+    if (getID() == fingerId && fingerAvailable) {
+        mcWrite(rgb.green, HIGH);
+        mcWrite(rgb.red, LOW);
+        Serial.println("FOUND ID: ");
+        Serial.print(fingerId);
+    } else {
+        mcWrite(rgb.green, LOW);
+        mcWrite(rgb.red, HIGH);
+    }
 }
+
 
 void initIO() {
     Wire.begin();
@@ -209,11 +231,14 @@ void initIO() {
     //initialize the 7-Segment Display
     clockDisplay.begin(displayAddress);
     finger.begin(57600);
+    // initialize Servo
+    servo.attach(servoPin);
     // Set RGB LED pins to OUTPUT
     mcPinMode(rgb.red, OUTPUT);
     mcPinMode(rgb.green, OUTPUT);
     mcPinMode(rgb.blue, OUTPUT);
 }
+
 
 void setup() {
     initIO();
@@ -222,13 +247,5 @@ void setup() {
 
 void loop() {
     showTime();
-    if (getID() == fingerId && finger.verifyPassword()) {
-        mcWrite(rgb.green, HIGH);
-        mcWrite(rgb.red, LOW);
-        Serial.println("FOUND ID: ");
-        Serial.print(fingerId);
-    } else {
-        mcWrite(rgb.green, LOW);
-        mcWrite(rgb.red, HIGH);
-    }
+    scan();
 }
