@@ -155,12 +155,12 @@ void showTime() {
 
 
 void animateBargraph() { // bargraph animation for testing purposes
-    for (int i = 0; i < 10; i++) {
-        mcWrite(i, HIGH);
+    for (int j = 9; j >= 1; j--) {
+        mcWrite(j, HIGH);
         delay(100);
     }
-    for (int j = 9; j >= 1; j--) {
-        mcWrite(j, LOW);
+    for (int i = 0; i < 10; i++) {
+        mcWrite(i, LOW);
         delay(100);
     }
 }
