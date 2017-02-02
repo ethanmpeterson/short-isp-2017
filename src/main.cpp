@@ -61,7 +61,7 @@ uint8_t portAValue = 0;
 uint8_t portBValue = 0;
 
 bool buttonState;
-
+bool locked;
 //MCP23017 functions
 
 void mcPinMode(uint8_t pin, bool state) {
@@ -153,15 +153,17 @@ void showTime() {
     clockDisplay.writeDisplay(); // show changes on the display
 }
 
-
 void animateBargraph() { // bargraph animation for testing purposes
+}
+
+void showBars(uint8_t barNum) { // shows progress of door being unlocked on bargraph
+    // clear Bargraph first
     for (int j = 9; j >= 1; j--) {
-        mcWrite(j, HIGH);
-        delay(100);
+        mcWrite(j, LOW);
     }
-    for (int i = 0; i < 10; i++) {
-        mcWrite(i, LOW);
-        delay(100);
+    // display specified # of bars on led bargraph
+    for (int i = 0; i < barNum; i++) {
+        mcWrite(i, HIGH);
     }
 }
 
@@ -194,6 +196,25 @@ uint8_t getID() {
     return finger.fingerID;
 }
 
+void lockState(bool state) { // changes door from locked to unlocked depending on bool passed to the function
+    servo.attach(9);
+    if (state) {
+        for (int i = openPos; i >= lockedPos; i--) {
+            servo.write(i);
+            uint8_t bars = map(servo.read(), lockedPos, openPos, 0, 10);
+            showBars(bars);
+            delay(25);
+        }
+    } else {
+        for (int j = lockedPos; j < openPos; j++) {
+            servo.write(j);
+            uint8_t bars = map(servo.read(), lockedPos, openPos, 0, 10);
+            showBars(bars);
+            delay(25);
+        }
+    }
+    servo.detach(); // prevent noise
+}
 
 void scan() { // runs in a loop scanning for a correct fingerprint on the sensor
     bool fingerAvailable = finger.verifyPassword();
@@ -202,12 +223,20 @@ void scan() { // runs in a loop scanning for a correct fingerprint on the sensor
         mcWrite(rgb.red, LOW);
         Serial.println("FOUND ID: ");
         Serial.print(fingerId);
+        locked = !locked;
+        lockState(locked);
     } else {
         mcWrite(rgb.green, LOW);
         mcWrite(rgb.red, HIGH);
     }
 }
 
+void buttonScan() {
+    buttonState = mcRead(button);
+    if (buttonState != mcRead(button)) {
+        
+    }
+}
 
 void initIO() {
     Wire.begin();
@@ -242,10 +271,11 @@ void initIO() {
 
 void setup() {
     initIO();
+    delay(1000);
 }
 
 
 void loop() {
-    showTime();
     scan();
+    showTime();
 }
