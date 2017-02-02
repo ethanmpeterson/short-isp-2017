@@ -201,14 +201,14 @@ void lockState(bool state) { // changes door from locked to unlocked depending o
     if (state) {
         for (int i = openPos; i >= lockedPos; i--) {
             servo.write(i);
-            uint8_t bars = map(servo.read(), lockedPos, openPos, 0, 10);
+            uint8_t bars = map(servo.read(), lockedPos, openPos, 0, 11);
             showBars(bars);
             delay(25);
         }
     } else {
         for (int j = lockedPos; j < openPos; j++) {
             servo.write(j);
-            uint8_t bars = map(servo.read(), lockedPos, openPos, 0, 10);
+            uint8_t bars = map(servo.read(), lockedPos, openPos, 0, 11);
             showBars(bars);
             delay(25);
         }
@@ -237,9 +237,6 @@ void buttonScan() {
     if (buttonState != mcRead(button)) {
         locked = !locked;
         lockState(locked);
-        mcWrite(rgb.blue, HIGH);
-    } else {
-        mcWrite(rgb.blue, LOW);
     }
 }
 
