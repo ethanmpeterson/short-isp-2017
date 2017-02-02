@@ -233,8 +233,13 @@ void scan() { // runs in a loop scanning for a correct fingerprint on the sensor
 
 void buttonScan() {
     buttonState = mcRead(button);
+    delay(100);
     if (buttonState != mcRead(button)) {
-        
+        locked = !locked;
+        lockState(locked);
+        mcWrite(rgb.blue, HIGH);
+    } else {
+        mcWrite(rgb.blue, LOW);
     }
 }
 
@@ -278,4 +283,5 @@ void setup() {
 void loop() {
     scan();
     showTime();
+    buttonScan();
 }
